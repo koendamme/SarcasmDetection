@@ -2,6 +2,7 @@ import json
 from torch.utils.data import Dataset
 from gensim.models import Word2Vec
 import torch
+import numpy as np
 
 
 class SarcasmDataset(Dataset):
@@ -17,6 +18,9 @@ class SarcasmDataset(Dataset):
     def __getitem__(self, idx):
         sentence, label = self.data["data"][idx], self.data["label"][idx]
 
-        x = torch.zeros((len(sentence), self.w2v.vector_size))
+        x = np.zeros((len(sentence), self.w2v.vector_size))
 
-        return x, torch.Tensor([label])
+        for i, token in enumerate(sentence):
+            x[i, :] = self.w2v.wv[token]
+
+        return torch.Tensor(x), torch.Tensor([label])

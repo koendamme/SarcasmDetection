@@ -8,6 +8,7 @@ from sarcasm_dataset import SarcasmDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from simple_nn import NeuralNetwork
+from gru import GRU
 nltk.download('stopwords')
 nltk.download('punkt')
 
@@ -22,8 +23,9 @@ if __name__ == '__main__':
     n_epochs = 10
     embedding_size = 100
     model = NeuralNetwork(embedding_size)
+    # model = GRU(embedding_size)
     model = model.to(device)
-    loss = F.binary_cross_entropy
+    bce = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=.001)
 
     for epoch in range(n_epochs):
@@ -35,11 +37,12 @@ if __name__ == '__main__':
         for x_batch, y_batch in tqdm(loader):
             x_batch = x_batch.to(device)
             y_batch = y_batch.to(device)
+            print(x_batch.shape)
 
             output = model(x_batch)
 
             output = torch.round(output)
-            loss = F.binary_cross_entropy(torch.round(output), y_batch)
+            loss = bce(torch.round(output), y_batch)
 
             # Backpropagation
             optimizer.zero_grad()
@@ -47,5 +50,6 @@ if __name__ == '__main__':
             optimizer.step()
             train_loss += loss.item()
             step += 1
+        print(loss)
 
         train_loss /= step

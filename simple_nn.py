@@ -10,7 +10,6 @@ class NeuralNetwork(nn.Module):
         self.fc2 = nn.Linear(1024, 128)
         self.fc3 = nn.Linear(128, 1)
 
-
     def forward(self, x):
         x = self.fc1(x)
         x = F.relu(x)

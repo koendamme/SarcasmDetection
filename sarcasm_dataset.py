@@ -17,9 +17,6 @@ class SarcasmDataset(Dataset):
     def __getitem__(self, idx):
         sentence, label = self.data["data"][idx], self.data["label"][idx]
 
-        pooled = torch.zeros(self.w2v.vector_size)
+        x = torch.zeros((len(sentence), self.w2v.vector_size))
 
-        for word in sentence:
-            pooled += self.w2v.wv[word]
-
-        return pooled, torch.Tensor([label])
+        return x, torch.Tensor([label])

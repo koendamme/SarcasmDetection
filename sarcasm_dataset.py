@@ -6,7 +6,8 @@ import numpy as np
 
 
 class SarcasmDataset(Dataset):
-    def __init__(self, data_file, embedding_model_path):
+    def __init__(self, data_file, embedding_model_path, pool_sequence=True):
+        self.pool_sequence = pool_sequence
         with open(data_file, "r") as f:
             self.data = json.load(f)
 
@@ -22,5 +23,8 @@ class SarcasmDataset(Dataset):
 
         for i, token in enumerate(sentence):
             x[i, :] = self.w2v.wv[token]
+
+        if self.pool_sequence:
+            x = np.sum(x, axis=0)
 
         return torch.Tensor(x), torch.Tensor([label])

@@ -11,8 +11,8 @@ class GRU(nn.Module):
             input_size=embedding_size,
             hidden_size=100,
             batch_first=True,
-            bidirectional=True,
-            num_layers=4)
+            bidirectional=False,
+            num_layers=1)
 
         self.fc = nn.Linear(100, 1)
 

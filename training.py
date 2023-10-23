@@ -56,6 +56,7 @@ def train():
     for epoch in range(n_epochs):
         model.train()
         train_loss = 0
+        n_corrects = 0
         step = 0
 
         print(f"Epoch {str(epoch + 1)}/{str(n_epochs)}. Training...")
@@ -65,6 +66,10 @@ def train():
             optimizer.zero_grad()
 
             output = model(x_batch)
+            predictions = torch.round(output)
+
+            n_corrects += torch.sum(predictions == y_batch)
+
             loss = bce(output, y_batch)
 
             # Backpropagation
@@ -73,9 +78,11 @@ def train():
             train_loss += loss.item()
             step += 1
         writer.add_scalar("Loss/train", train_loss/step, epoch)
+        writer.add_scalar("Accuracy/train", n_corrects/len(dataset), epoch)
 
         model.eval()
         val_loss = 0
+        n_corrects = 0
         step = 0
         print("Validating...")
         for x_batch, y_batch in tqdm(loader_val):
@@ -83,12 +90,18 @@ def train():
             y_batch = y_batch.to(device)
 
             output = model(x_batch)
+            predictions = torch.round(output)
+
+            n_corrects += torch.sum(predictions == y_batch)
+
             loss = bce(output, y_batch)
 
             val_loss += loss.item()
             step += 1
 
         writer.add_scalar("Loss/val", val_loss/step, epoch)
+        writer.add_scalar("Accuracy/val", n_corrects/len(dataset_val), epoch)
+
         torch.save(model.state_dict(), f"{dir_name}/epoch{epoch+1}.pt")
         val_losses[epoch] = val_loss / step
         models.append(copy.deepcopy(model))
@@ -97,8 +110,9 @@ def train():
     writer.close()
 
     opt_epoch = np.argmin(val_losses)
-    with open(f"{dir_name}/opt_model.txt" "w") as f:
+    with open(f"{dir_name}/opt_model.txt", "w") as f:
         f.write(str(opt_epoch + 1))
+
 
 if __name__ == '__main__':
     train()

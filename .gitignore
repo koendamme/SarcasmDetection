@@ -7,3 +7,4 @@ runs
 data2
 models
 word2vec
+*.ipynb

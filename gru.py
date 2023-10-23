@@ -9,16 +9,46 @@ class GRU(nn.Module):
 
         self.gru = nn.GRU(
             input_size=embedding_size,
-            hidden_size=100,
+            hidden_size=300,
             batch_first=True,
             bidirectional=False,
             num_layers=1)
 
-        self.fc = nn.Linear(100, 1)
+        self.fc = nn.Linear(300, 1)
 
     def forward(self, x):
         _, x = self.gru(x)
         x = self.fc(x[0])
+        o = torch.sigmoid(x)
+        return o
+
+
+class BiDirGRU(nn.Module):
+    def __init__(self, embedding_size):
+        super(BiDirGRU, self).__init__()
+
+        self.gru = nn.GRU(
+            input_size=embedding_size,
+            hidden_size=100,
+            batch_first=True,
+            bidirectional=True,
+            dropout=.1,
+            num_layers=1
+        )
+
+        self.fc1 = nn.Linear(200, 500)
+        self.relu = nn.ReLU(inplace=True)
+        self.fc2 = nn.Linear(500, 300)
+        self.fc3 = nn.Linear(300, 1)
+
+    def forward(self, x):
+        _, x = self.gru(x)
+        x = torch.flatten(torch.permute(x, (1, 0, 2)), start_dim=1)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.relu(x)
+        x = self.fc3(x)
         o = torch.sigmoid(x)
         return o
 
@@ -37,13 +67,15 @@ if __name__ == '__main__':
     print(batch.shape)
     gru = nn.GRU(
             input_size=100,
-            hidden_size=100,
+            hidden_size=300,
             batch_first=True,
-            bidirectional=False,
+            bidirectional=True,
             num_layers=1)
 
     o, h = gru(torch.Tensor(batch))
-    print(o.shape, h.shape)
+
+    flattened = torch.flatten(torch.permute(h, (1, 0, 2)), start_dim=1)
+    print(o.shape, h.shape, flattened.shape)
 
     # print(o2)
 

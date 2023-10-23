@@ -7,8 +7,10 @@ def word2vec(data_path, save_dir, embedding_size=100):
         d = json.load(f)
 
     w2v = Word2Vec(sentences=d["data"], min_count=1, vector_size=embedding_size)
-    w2v.save(f"{save_dir}/word2vec.model")
+    w2v.save(save_dir)
 
 
 if __name__ == '__main__':
-    word2vec("data.json", "word2vec")
+    word2vec("train_data.json", "word2vec/word2vec_small.model", 50)
+
+

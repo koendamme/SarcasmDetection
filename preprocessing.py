@@ -23,8 +23,8 @@ def preprocess(comment):
 if __name__ == '__main__':
     df = pd.read_csv("data/train-balanced-sarcasm.csv")
     df = df.dropna()
-    X_train = df.comment.to_numpy()[0:1000]
-    y_train = df.label.to_numpy()[0:1000]
+    X_train = df.comment.to_numpy()[:5000]
+    y_train = df.label.to_numpy()[:5000]
 
     data = []
     stop_words = set(stopwords.words('english'))
@@ -44,7 +44,9 @@ if __name__ == '__main__':
     d = pandas.DataFrame.from_dict(d)
 
     train, val = sklearn.model_selection.train_test_split(d, train_size=0.9)
-
+    print(train.head)
+    print()
+    print(val.head)
     d_train = {"data": train['data'].tolist(), "label": train['label'].tolist()}
     d_val = {"data": val.data.tolist(), "label": val.label.tolist()}
 

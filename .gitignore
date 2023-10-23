@@ -5,3 +5,5 @@ data
 __pycache__/
 runs
 data2
+models
+word2vec

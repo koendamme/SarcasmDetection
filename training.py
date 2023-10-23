@@ -33,8 +33,8 @@ def train():
     # tensorboard --logdir=runs
     writer = SummaryWriter()
 
-    n_epochs = 50
-    embedding_size = 50
+    n_epochs = 20
+    embedding_size = 100
     # model = NeuralNetwork(embedding_size)
     # model = GRU(embedding_size)
     model = BiDirGRU(embedding_size)

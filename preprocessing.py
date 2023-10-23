@@ -24,8 +24,8 @@ if __name__ == '__main__':
     df = pd.read_csv("data2/train-balanced.csv", sep='\t',
                      names=['label','comment','author','subreddit','score','ups','downs','date','created_utc','parent_comment'])
     df = df.dropna()
-    X_train = df.comment.to_numpy()[:5000]
-    y_train = df.label.to_numpy()[:5000]
+    X_train = df.comment.to_numpy()
+    y_train = df.label.to_numpy()
 
     data = []
     stop_words = set(stopwords.words('english'))

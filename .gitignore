@@ -5,3 +5,6 @@ data
 __pycache__/
 runs
 data2
+*.ipynb
+models
+word2vec

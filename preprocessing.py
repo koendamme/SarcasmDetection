@@ -21,10 +21,12 @@ def preprocess(comment):
 
 
 if __name__ == '__main__':
-    df = pd.read_csv("data/train-balanced-sarcasm.csv")
+    df = pd.read_csv("data2/train-balanced.csv", sep='\t',
+                     names=['label','comment','author','subreddit','score','ups','downs','date','created_utc','parent_comment'])
     df = df.dropna()
-    X_train = df.comment.to_numpy()[0:1000]
-    y_train = df.label.to_numpy()[0:1000]
+    # print(df['comment'])
+    X_train = df['comment'].to_numpy()[0:3000]
+    y_train = df['label'].to_numpy()[0:3000]
 
     data = []
     stop_words = set(stopwords.words('english'))
@@ -53,3 +55,27 @@ if __name__ == '__main__':
 
     with open("val_data.json", "w") as f:
         json.dump(d_val, f)
+
+    df = pd.read_csv("data2/test-balanced.csv", sep='\t',
+                     names=['label','comment','author','subreddit','score','ups','downs','date','created_utc','parent_comment'])
+    df = df.dropna()
+    X_test = df['comment'].to_numpy()
+    y_test = df['label'].to_numpy()
+
+    data = []
+    stop_words = set(stopwords.words('english'))
+
+    d_test = {"data": [], "label": []}
+
+    for comment, label in zip(X_test, y_test):
+        temp = []
+        comment = preprocess(comment)
+
+        for token in word_tokenize(comment):
+            if token not in stop_words:
+                temp.append(token)
+        d_test["data"].append(temp)
+        d_test["label"].append(int(label))
+
+    with open("test_data.json", "w") as f:
+        json.dump(d_test, f)

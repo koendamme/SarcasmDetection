@@ -20,6 +20,7 @@ class SarcasmDataset(Dataset):
         pooled = torch.zeros(self.w2v.vector_size)
 
         for word in sentence:
-            pooled += self.w2v.wv[word]
+            if word in self.w2v.wv.index_to_key:
+                pooled += self.w2v.wv[word]
 
         return pooled, torch.Tensor([label])

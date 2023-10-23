@@ -1,3 +1,5 @@
+import copy
+import pandas as pd
 import nltk
 import torch
 import torch.nn as nn
@@ -37,6 +39,7 @@ def train():
     # model = GRU(embedding_size)
     model = BiDirGRU(embedding_size)
     model = model.to(device)
+    models = []
 
     bce = nn.BCELoss()
     lr = .01
@@ -47,6 +50,8 @@ def train():
 
     dir_name = f"models/{model.__class__.__name__}+{bce.__class__.__name__}+{str(lr)}+{optimizer.__class__.__name__}+{date_str}"
     os.mkdir(dir_name)
+
+    val_losses = np.zeros(n_epochs)
 
     for epoch in range(n_epochs):
         model.train()
@@ -67,7 +72,6 @@ def train():
             optimizer.step()
             train_loss += loss.item()
             step += 1
-
         writer.add_scalar("Loss/train", train_loss/step, epoch)
 
         model.eval()
@@ -86,9 +90,15 @@ def train():
 
         writer.add_scalar("Loss/val", val_loss/step, epoch)
         torch.save(model.state_dict(), f"{dir_name}/epoch{epoch+1}.pt")
+        val_losses[epoch] = val_loss / step
+        models.append(copy.deepcopy(model))
+
     writer.flush()
     writer.close()
 
+    opt_epoch = np.argmin(val_losses)
+    with open(f"{dir_name}/opt_model.txt" "w") as f:
+        f.write(str(opt_epoch + 1))
 
 if __name__ == '__main__':
     train()

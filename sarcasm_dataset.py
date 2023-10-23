@@ -22,7 +22,8 @@ class SarcasmDataset(Dataset):
         x = np.zeros((len(sentence), self.w2v.vector_size))
 
         for i, token in enumerate(sentence):
-            x[i, :] = self.w2v.wv[token]
+            if token in self.w2v.wv.index_to_key:
+                x[i, :] = self.w2v.wv[token]
 
         if self.pool_sequence:
             x = np.sum(x, axis=0)

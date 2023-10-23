@@ -4,3 +4,4 @@ data
 *.json
 __pycache__/
 runs
+data2

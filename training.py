@@ -21,12 +21,12 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Loaded device: {device}")
 
-    dataset = SarcasmDataset("train_data.json", "word2vec/word2vec_small.model", pool_sequence=False)
-    dataset_val = SarcasmDataset("val_data.json", "word2vec/word2vec_small.model", pool_sequence=False)
+    dataset = SarcasmDataset("train_data.json", "word2vec/word2vec_100.model", pool_sequence=True)
+    dataset_val = SarcasmDataset("val_data.json", "word2vec/word2vec_100.model", pool_sequence=True)
 
     # Remove collate_fn when training neural network
-    loader = DataLoader(dataset, batch_size=16, collate_fn=custom_collate_fn)
-    loader_val = DataLoader(dataset_val, batch_size=16, collate_fn=custom_collate_fn)
+    loader = DataLoader(dataset, batch_size=128, num_workers=8, pin_memory=True)
+    loader_val = DataLoader(dataset_val, batch_size=128, num_workers=8, pin_memory=True)
 
     # For writing to tensorboard. run in terminal:
     # pip install tensorboard
@@ -35,9 +35,9 @@ def train():
 
     n_epochs = 20
     embedding_size = 100
-    # model = NeuralNetwork(embedding_size)
+    model = NeuralNetwork(embedding_size)
     # model = GRU(embedding_size)
-    model = BiDirGRU(embedding_size)
+    # model = BiDirGRU(embedding_size)
     model = model.to(device)
     models = []
 
@@ -106,12 +106,12 @@ def train():
         val_losses[epoch] = val_loss / step
         models.append(copy.deepcopy(model))
 
-    writer.flush()
-    writer.close()
-
-    opt_epoch = np.argmin(val_losses)
-    with open(f"{dir_name}/opt_model.txt", "w") as f:
-        f.write(str(opt_epoch + 1))
+    # writer.flush()
+    # writer.close()
+    #
+    # opt_epoch = np.argmin(val_losses)
+    # with open(f"{dir_name}/opt_model.txt", "w") as f:
+    #     f.write(str(opt_epoch + 1))
 
 
 if __name__ == '__main__':

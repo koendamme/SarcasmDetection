@@ -6,7 +6,7 @@ import numpy as np
 
 
 class SarcasmDataset(Dataset):
-    def __init__(self, data_file, embedding_model_path, pool_sequence=True):
+    def __init__(self, data_file, embedding_model_path, pool_sequence=True, sarcastic_ratio=.5):
         self.pool_sequence = pool_sequence
         with open(data_file, "r") as f:
             self.data = json.load(f)

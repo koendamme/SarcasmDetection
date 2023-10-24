@@ -109,9 +109,9 @@ def train():
     writer.flush()
     writer.close()
 
-    opt_epoch = np.argmin(val_losses)
-    with open(f"{dir_name}/opt_model.txt", "w") as f:
-        f.write(str(opt_epoch + 1))
+    # opt_epoch = np.argmin(val_losses)
+    # with open(f"{dir_name}/opt_model.txt", "w") as f:
+    #     f.write(str(opt_epoch + 1))
 
 
 if __name__ == '__main__':

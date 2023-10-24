@@ -21,6 +21,7 @@ def preprocess(comment):
 
 
 if __name__ == '__main__':
+
     # df = pd.read_csv("data2/train-balanced.csv", sep='\t',
     #                  names=['label','comment','author','subreddit','score','ups','downs','date','created_utc','parent_comment'])
     # df = df.dropna()

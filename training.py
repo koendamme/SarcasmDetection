@@ -21,12 +21,12 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Loaded device: {device}")
 
-    dataset = SarcasmDataset("train_data.json", "word2vec/word2vec_100.model", pool_sequence=True)
-    dataset_val = SarcasmDataset("val_data.json", "word2vec/word2vec_100.model", pool_sequence=True)
+    dataset = SarcasmDataset("train_data.json", "word2vec/word2vec_100.model", pool_sequence=False)
+    dataset_val = SarcasmDataset("val_data.json", "word2vec/word2vec_100.model", pool_sequence=False)
 
     # Remove collate_fn when training neural network
-    loader = DataLoader(dataset, batch_size=128, num_workers=8, pin_memory=True)
-    loader_val = DataLoader(dataset_val, batch_size=128, num_workers=8, pin_memory=True)
+    loader = DataLoader(dataset, batch_size=512, num_workers=6, pin_memory=True, collate_fn=custom_collate_fn)
+    loader_val = DataLoader(dataset_val, batch_size=512, num_workers=4, pin_memory=True, collate_fn=custom_collate_fn)
 
     # For writing to tensorboard. run in terminal:
     # pip install tensorboard
@@ -35,14 +35,14 @@ def train():
 
     n_epochs = 20
     embedding_size = 100
-    model = NeuralNetwork(embedding_size)
+    # model = NeuralNetwork(embedding_size)
     # model = GRU(embedding_size)
-    # model = BiDirGRU(embedding_size)
+    model = BiDirGRU(embedding_size)
     model = model.to(device)
     models = []
 
     bce = nn.BCELoss()
-    lr = .01
+    lr = .001
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     date_str = datetime.now().strftime('%d-%b_%H-%M')
@@ -77,8 +77,10 @@ def train():
             optimizer.step()
             train_loss += loss.item()
             step += 1
-        writer.add_scalar("Loss/train", train_loss/step, epoch)
-        writer.add_scalar("Accuracy/train", n_corrects/len(dataset), epoch)
+        train_loss = train_loss/step
+        train_accuracy = n_corrects/len(dataset)
+        writer.add_scalar("Loss/train", train_loss, epoch)
+        writer.add_scalar("Accuracy/train", train_accuracy, epoch)
 
         model.eval()
         val_loss = 0
@@ -99,15 +101,17 @@ def train():
             val_loss += loss.item()
             step += 1
 
-        writer.add_scalar("Loss/val", val_loss/step, epoch)
-        writer.add_scalar("Accuracy/val", n_corrects/len(dataset_val), epoch)
+        val_loss = val_loss/step
+        val_accuracy = n_corrects/len(dataset_val)
+        writer.add_scalar("Loss/val", val_loss, epoch)
+        writer.add_scalar("Accuracy/val", val_accuracy, epoch)
 
         torch.save(model.state_dict(), f"{dir_name}/epoch{epoch+1}.pt")
         val_losses[epoch] = val_loss / step
         models.append(copy.deepcopy(model))
 
-    # writer.flush()
-    # writer.close()
+    writer.flush()
+    writer.close()
     #
     # opt_epoch = np.argmin(val_losses)
     # with open(f"{dir_name}/opt_model.txt", "w") as f:

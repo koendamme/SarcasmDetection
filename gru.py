@@ -29,17 +29,17 @@ class BiDirGRU(nn.Module):
 
         self.gru = nn.GRU(
             input_size=embedding_size,
-            hidden_size=100,
+            hidden_size=200,
             batch_first=True,
             bidirectional=True,
-            dropout=.1,
+            dropout=.2,
             num_layers=1
         )
 
-        self.fc1 = nn.Linear(200, 500)
+        self.fc1 = nn.Linear(400, 1024)
         self.relu = nn.ReLU(inplace=True)
-        self.fc2 = nn.Linear(500, 300)
-        self.fc3 = nn.Linear(300, 1)
+        self.fc2 = nn.Linear(1024, 1)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         _, x = self.gru(x)
@@ -47,9 +47,7 @@ class BiDirGRU(nn.Module):
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
-        x = self.relu(x)
-        x = self.fc3(x)
-        o = torch.sigmoid(x)
+        o = self.sigmoid(x)
         return o
 
 

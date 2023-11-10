@@ -22,12 +22,12 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Loaded device: {device}")
 
-    dataset = SarcasmDataset("train_data.json", "word2vec/word2vec_200.model", pool_sequence=False)
-    dataset_val = SarcasmDataset("val_data.json", "word2vec/word2vec_200.model", pool_sequence=False)
+    dataset = SarcasmDataset("train_data.json", "word2vec/word2vec_100.model", pool_sequence=True)
+    dataset_val = SarcasmDataset("val_data.json", "word2vec/word2vec_100.model", pool_sequence=True)
 
     # Remove collate_fn when training neural network
-    loader = DataLoader(dataset, batch_size=256, num_workers=8, pin_memory=True, collate_fn=custom_collate_fn, shuffle=True)
-    loader_val = DataLoader(dataset_val, batch_size=256, num_workers=4, pin_memory=True, collate_fn=custom_collate_fn, shuffle=True)
+    loader = DataLoader(dataset, batch_size=512, num_workers=8, pin_memory=True, shuffle=True)
+    loader_val = DataLoader(dataset_val, batch_size=512, num_workers=4, pin_memory=True, shuffle=True)
 
     # For writing to tensorboard. run in terminal:
     # pip install tensorboard
@@ -35,16 +35,16 @@ def train():
     writer = SummaryWriter()
 
     n_epochs = 100
-    embedding_size = 200
-    # model = NeuralNetwork(embedding_size)
+    embedding_size = 100
+    model = NeuralNetwork(embedding_size)
     # model = GRU(embedding_size)
-    model = BiDirGRU(embedding_size)
+    # model = BiDirGRU(embedding_size)
     model = model.to(device)
 
     bce = nn.BCELoss()
-    lr = .01
+    lr = .001
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = LinearLR(optimizer=optimizer, start_factor=1.0, end_factor=.0001, total_iters=100)
+    scheduler = LinearLR(optimizer=optimizer, start_factor=1.0, end_factor=.1, total_iters=10)
 
     date_str = datetime.now().strftime('%d-%b_%H-%M')
     print(date_str)
@@ -58,7 +58,7 @@ def train():
 
     for epoch in range(n_epochs):
         model.train()
-        train_loss = 0
+        running_train_loss = 0
         n_corrects = 0
         step = 0
 
@@ -78,15 +78,15 @@ def train():
             # Backpropagation
             loss.backward()
             optimizer.step()
-            train_loss += loss.item()
+            running_train_loss += loss.item()
             step += 1
-        train_loss = train_loss/step
+        train_loss = running_train_loss/step
         train_accuracy = n_corrects/len(dataset)
         writer.add_scalar("Loss/train", train_loss, epoch)
         writer.add_scalar("Accuracy/train", train_accuracy, epoch)
 
         model.eval()
-        val_loss = 0
+        running_val_loss = 0
         n_corrects = 0
         step = 0
         print("Validating...")
@@ -101,10 +101,10 @@ def train():
 
             loss = bce(output, y_batch)
 
-            val_loss += loss.item()
+            running_val_loss += loss.item()
             step += 1
 
-        val_loss = val_loss/step
+        val_loss = running_val_loss/step
         val_losses.append(val_loss)
         val_accuracy = n_corrects/len(dataset_val)
         scheduler.step()

@@ -11,4 +11,4 @@ def word2vec(data_path, save_dir, embedding_size=100):
 
 
 if __name__ == '__main__':
-    word2vec("train_data.json", "word2vec/word2vec_100.model", 100)
+    word2vec("train_data.json", "word2vec/word2vec_200.model", 200)

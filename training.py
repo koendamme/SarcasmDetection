@@ -12,7 +12,8 @@ from torch.utils.tensorboard import SummaryWriter
 from gru import GRU, BiDirGRU
 import os
 from datetime import datetime
-from util import custom_collate_fn
+from util import custom_collate_fn, EarlyStopper
+from torch.optim.lr_scheduler import LinearLR
 # nltk.download('stopwords')
 # nltk.download('punkt')
 
@@ -21,29 +22,29 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Loaded device: {device}")
 
-    dataset = SarcasmDataset("train_data.json", "word2vec/word2vec_100.model", pool_sequence=False)
-    dataset_val = SarcasmDataset("val_data.json", "word2vec/word2vec_100.model", pool_sequence=False)
+    dataset = SarcasmDataset("train_data.json", "word2vec/word2vec_200.model", pool_sequence=False)
+    dataset_val = SarcasmDataset("val_data.json", "word2vec/word2vec_200.model", pool_sequence=False)
 
     # Remove collate_fn when training neural network
-    loader = DataLoader(dataset, batch_size=512, num_workers=6, pin_memory=True, collate_fn=custom_collate_fn)
-    loader_val = DataLoader(dataset_val, batch_size=512, num_workers=4, pin_memory=True, collate_fn=custom_collate_fn)
+    loader = DataLoader(dataset, batch_size=256, num_workers=8, pin_memory=True, collate_fn=custom_collate_fn, shuffle=True)
+    loader_val = DataLoader(dataset_val, batch_size=256, num_workers=4, pin_memory=True, collate_fn=custom_collate_fn, shuffle=True)
 
     # For writing to tensorboard. run in terminal:
     # pip install tensorboard
     # tensorboard --logdir=runs
     writer = SummaryWriter()
 
-    n_epochs = 20
-    embedding_size = 100
+    n_epochs = 100
+    embedding_size = 200
     # model = NeuralNetwork(embedding_size)
     # model = GRU(embedding_size)
     model = BiDirGRU(embedding_size)
     model = model.to(device)
-    models = []
 
     bce = nn.BCELoss()
-    lr = .001
+    lr = .01
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    scheduler = LinearLR(optimizer=optimizer, start_factor=1.0, end_factor=.0001, total_iters=100)
 
     date_str = datetime.now().strftime('%d-%b_%H-%M')
     print(date_str)
@@ -51,7 +52,9 @@ def train():
     dir_name = f"models/{model.__class__.__name__}+{bce.__class__.__name__}+{str(lr)}+{optimizer.__class__.__name__}+{date_str}"
     os.mkdir(dir_name)
 
-    val_losses = np.zeros(n_epochs)
+    val_losses = []
+
+    early_stopper = EarlyStopper(patience=5, min_delta=0.01)
 
     for epoch in range(n_epochs):
         model.train()
@@ -102,20 +105,24 @@ def train():
             step += 1
 
         val_loss = val_loss/step
+        val_losses.append(val_loss)
         val_accuracy = n_corrects/len(dataset_val)
+        scheduler.step()
         writer.add_scalar("Loss/val", val_loss, epoch)
         writer.add_scalar("Accuracy/val", val_accuracy, epoch)
 
         torch.save(model.state_dict(), f"{dir_name}/epoch{epoch+1}.pt")
-        val_losses[epoch] = val_loss / step
-        models.append(copy.deepcopy(model))
+
+        if early_stopper.early_stop(val_loss):
+            print(f"Early stopping at epoch {epoch + 1}!")
+            break
 
     writer.flush()
     writer.close()
-    #
-    # opt_epoch = np.argmin(val_losses)
-    # with open(f"{dir_name}/opt_model.txt", "w") as f:
-    #     f.write(str(opt_epoch + 1))
+
+    opt_epoch = np.argmin(val_losses)
+    with open(f"{dir_name}/opt_model.txt", "w") as f:
+        f.write(str(opt_epoch + 1))
 
 
 if __name__ == '__main__':
